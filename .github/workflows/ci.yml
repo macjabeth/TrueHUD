@@ -12,10 +12,26 @@ jobs:
       BUILD_DIR: ${{ github.workspace }}\build
       ARTIFACTS_DIR: ${{ github.workspace }}\artifacts
       COMMONLIBSSE_NG_DIR: ${{ github.workspace }}\deps\CommonLibSSE-NG
-      VCPKG_ROOT: ${{ runner.temp }}\vcpkg
+      VCPKG_ROOT: ${{ github.workspace }}\deps\vcpkg
+      VCPKG_DEFAULT_TRIPLET: x64-windows
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup CMake
+        uses: lukka/get-cmake@v3
+
+      - name: Cache vcpkg installed packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.VCPKG_ROOT }}\installed
+            ${{ env.VCPKG_ROOT }}\buildtrees
+            ${{ env.VCPKG_ROOT }}\packages
+            ${{ env.USERPROFILE }}\AppData\Local\vcpkg\archives
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}
 
       - name: Install vcpkg (classic)
         shell: pwsh
