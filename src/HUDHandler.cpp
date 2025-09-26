@@ -237,7 +237,8 @@ HUDHandler::EventResult HUDHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a
 
 	// Hide the widgets when a menu is open
 	if (const auto controlMap = RE::ControlMap::GetSingleton()) {
-		const auto& priorityStack = controlMap->GetRuntimeData().contextPriorityStack;
+		// CommonLibSSE-NG exposes contextPriorityStack directly on ControlMap
+		const auto& priorityStack = controlMap->contextPriorityStack;
 		if (priorityStack.empty()) {
 			HUDHandler::GetSingleton()->SetMenuVisibilityMode(MenuVisibilityMode::kHidden);
 		} else if (priorityStack.back() == ContextID::kGameplay ||
@@ -768,15 +769,22 @@ void HUDHandler::Initialize()
 
 	void HUDHandler::Process(TrueHUDMenu& a_menu, float a_deltaTime)
 {
-	while (!_taskQueue.empty()) {
-		auto& task = _taskQueue.front();
-		// Fix for std::bad_function_call crash - check if function is valid
+	// Drain tasks under lock to avoid data races
+	std::queue<HUDTask> localTasks;
+	{
+		Locker locker(_lock);
+		std::swap(localTasks, _taskQueue);
+	}
+
+	// Process drained tasks outside the lock
+	while (!localTasks.empty()) {
+		auto task = std::move(localTasks.front());
+		localTasks.pop();
 		if (task) {
 			task(a_menu);
 		} else {
-			logger::warn("Skipping empty HUD task in queue");
+			logger::warn("Skipping empty HUD task (drained)");
 		}
-		_taskQueue.pop();
 	}
 
 	for (auto it = _stackingDamage.begin(), next_it = it; it != _stackingDamage.end(); it = next_it) {

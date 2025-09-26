@@ -106,7 +106,10 @@ target_include_directories(
 		"${SOURCE_DIR}"
 )
 
-set(SKSE_SUPPORT_XBYAK ON)
+# Allow callers to override Xbyak support; default to ON if not explicitly set
+if(NOT DEFINED SKSE_SUPPORT_XBYAK)
+	set(SKSE_SUPPORT_XBYAK ON)
+endif()
 add_subdirectory("$ENV{CommonLibSSEPath_NG}" CommonLibSSE EXCLUDE_FROM_ALL)
 
 find_package(xbyak REQUIRED CONFIG)

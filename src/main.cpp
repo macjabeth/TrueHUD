@@ -102,7 +102,11 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 #ifndef NDEBUG
 	while (!IsDebuggerPresent()) { Sleep(100); }
 #endif
+	// REL::Module::reset() is only available in CommonLibSSE-NG when ENABLE_COMMONLIBSSE_TESTING is defined.
+	// It is not present in standard builds, so guard it for compatibility.
+	#ifdef ENABLE_COMMONLIBSSE_TESTING
 	REL::Module::reset();  // Clib-NG bug workaround
+	#endif
 	
 	InitializeLog();
 	logger::info("{} v{}"sv, Plugin::NAME, Plugin::VERSION.string());
