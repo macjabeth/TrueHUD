@@ -12,17 +12,19 @@ jobs:
       BUILD_DIR: ${{ github.workspace }}\build
       ARTIFACTS_DIR: ${{ github.workspace }}\artifacts
       COMMONLIBSSE_NG_DIR: ${{ github.workspace }}\deps\CommonLibSSE-NG
+      VCPKG_ROOT: ${{ runner.temp }}\vcpkg
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup vcpkg
-        uses: microsoft/vcpkg-action@v1
-        with:
-          # Use classic mode so the toolchain file path is predictable
-          vcpkgGitCommitId: ''
+      - name: Install vcpkg (classic)
+        shell: pwsh
+        run: |
+          git clone --depth=1 https://github.com/microsoft/vcpkg "${{ env.VCPKG_ROOT }}"
+          & "${{ env.VCPKG_ROOT }}\bootstrap-vcpkg.bat"
 
       - name: Clone CommonLibSSE-NG
+        shell: pwsh
         run: |
           git clone --depth=1 https://github.com/CharmedBaryon/CommonLibSSE-NG "${{ env.COMMONLIBSSE_NG_DIR }}"
 
