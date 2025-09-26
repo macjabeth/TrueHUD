@@ -18,8 +18,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup CMake
-        uses: lukka/get-cmake@v3
+      - name: Check CMake version
+        shell: pwsh
+        run: cmake --version
 
       - name: Cache vcpkg installed packages
         uses: actions/cache@v4
