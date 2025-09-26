@@ -769,23 +769,13 @@ void HUDHandler::Initialize()
 
 	void HUDHandler::Process(TrueHUDMenu& a_menu, float a_deltaTime)
 {
-	// Drain tasks under lock to avoid data races
-	std::queue<HUDTask> localTasks;
-	{
-		Locker locker(_lock);
-		std::swap(localTasks, _taskQueue);
-	}
-
-	// Process drained tasks outside the lock
-	while (!localTasks.empty()) {
-		auto task = std::move(localTasks.front());
-		localTasks.pop();
+	DrainAndProcessTasks([&](HUDTask& task) {
 		if (task) {
 			task(a_menu);
 		} else {
 			logger::warn("Skipping empty HUD task (drained)");
 		}
-	}
+	});
 
 	for (auto it = _stackingDamage.begin(), next_it = it; it != _stackingDamage.end(); it = next_it) {
 		++next_it;
