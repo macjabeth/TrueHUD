@@ -766,11 +766,16 @@ void HUDHandler::Initialize()
 	
 }
 
-void HUDHandler::Process(TrueHUDMenu& a_menu, float a_deltaTime)
+	void HUDHandler::Process(TrueHUDMenu& a_menu, float a_deltaTime)
 {
 	while (!_taskQueue.empty()) {
 		auto& task = _taskQueue.front();
-		task(a_menu);
+		// Fix for std::bad_function_call crash - check if function is valid
+		if (task) {
+			task(a_menu);
+		} else {
+			logger::warn("Skipping empty HUD task in queue");
+		}
 		_taskQueue.pop();
 	}
 
