@@ -236,26 +236,21 @@ HUDHandler::EventResult HUDHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a
 	}
 
 	// Hide the widgets when a menu is open
-	if (const auto controlMap = RE::ControlMap::GetSingleton()) {
-		// CommonLibSSE-NG exposes contextPriorityStack directly on ControlMap
-		const auto& priorityStack = controlMap->contextPriorityStack;
-		if (priorityStack.empty()) {
-			HUDHandler::GetSingleton()->SetMenuVisibilityMode(MenuVisibilityMode::kHidden);
-		} else if (priorityStack.back() == ContextID::kGameplay ||
-				   priorityStack.back() == ContextID::kFavorites ||
-				   priorityStack.back() == ContextID::kConsole) {
-			HUDHandler::GetSingleton()->SetMenuVisibilityMode(MenuVisibilityMode::kVisible);
-		} else if ((priorityStack.back() == ContextID::kCursor ||
-					   priorityStack.back() == ContextID::kItemMenu ||
-					   priorityStack.back() == ContextID::kMenuMode ||
-					   priorityStack.back() == ContextID::kInventory) &&
-				   (RE::UI::GetSingleton()->IsMenuOpen(RE::DialogueMenu::MENU_NAME) ||
-					   !Settings::bRecentLootHideInCraftingMenus && RE::UI::GetSingleton()->IsMenuOpen(RE::CraftingMenu::MENU_NAME) ||
-					   !Settings::bRecentLootHideInInventoryMenus && (RE::UI::GetSingleton()->IsMenuOpen(RE::BarterMenu::MENU_NAME) ||
-																		 RE::UI::GetSingleton()->IsMenuOpen(RE::ContainerMenu::MENU_NAME) ||
-																		 RE::UI::GetSingleton()->IsMenuOpen(RE::GiftMenu::MENU_NAME) ||
-																		 RE::UI::GetSingleton()->IsMenuOpen(RE::InventoryMenu::MENU_NAME)))) {
+	// NOTE: Avoid using ControlMap::contextPriorityStack due to reported crashes on some setups
+	if (const auto ui = RE::UI::GetSingleton()) {
+		const bool dialogueOpen = ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME);
+		const bool craftingOpen = !Settings::bRecentLootHideInCraftingMenus && ui->IsMenuOpen(RE::CraftingMenu::MENU_NAME);
+		const bool inventoryOpen = !Settings::bRecentLootHideInInventoryMenus && (
+			ui->IsMenuOpen(RE::BarterMenu::MENU_NAME) ||
+			ui->IsMenuOpen(RE::ContainerMenu::MENU_NAME) ||
+			ui->IsMenuOpen(RE::GiftMenu::MENU_NAME) ||
+			ui->IsMenuOpen(RE::InventoryMenu::MENU_NAME));
+
+		if (dialogueOpen || craftingOpen || inventoryOpen) {
 			HUDHandler::GetSingleton()->SetMenuVisibilityMode(MenuVisibilityMode::kPartial);
+		} else if (ui->IsMenuOpen(RE::HUDMenu::MENU_NAME)) {
+			// Treat gameplay/favorites/console cases as visible; HUD is still present in these
+			HUDHandler::GetSingleton()->SetMenuVisibilityMode(MenuVisibilityMode::kVisible);
 		} else {
 			HUDHandler::GetSingleton()->SetMenuVisibilityMode(MenuVisibilityMode::kHidden);
 		}
