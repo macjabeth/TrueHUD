@@ -14,6 +14,7 @@ jobs:
       COMMONLIBSSE_NG_DIR: ${{ github.workspace }}\deps\CommonLibSSE-NG
       VCPKG_ROOT: ${{ github.workspace }}\deps\vcpkg
       VCPKG_DEFAULT_TRIPLET: x64-windows
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\\vcpkg-bincache
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,14 +28,16 @@ jobs:
         run: |
           if (Test-Path "deps/vcpkg") { Remove-Item -Recurse -Force "deps/vcpkg" }
 
+      - name: Ensure vcpkg binary cache directory exists
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+
       - name: Cache vcpkg installed packages
         uses: actions/cache@v4
         with:
           path: |
-            ${{ env.VCPKG_ROOT }}\\installed
-            ${{ env.VCPKG_ROOT }}\\buildtrees
-            ${{ env.VCPKG_ROOT }}\\packages
-            ${{ env.USERPROFILE }}\\AppData\\Local\\vcpkg\\archives
+            ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
           key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}
