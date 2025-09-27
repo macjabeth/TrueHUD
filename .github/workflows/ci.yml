@@ -22,23 +22,29 @@ jobs:
         shell: pwsh
         run: cmake --version
 
+      - name: Remove existing vcpkg directory
+        shell: pwsh
+        run: |
+          if (Test-Path "deps/vcpkg") { Remove-Item -Recurse -Force "deps/vcpkg" }
+
       - name: Cache vcpkg installed packages
         uses: actions/cache@v4
         with:
           path: |
-            ${{ env.VCPKG_ROOT }}\installed
-            ${{ env.VCPKG_ROOT }}\buildtrees
-            ${{ env.VCPKG_ROOT }}\packages
-            ${{ env.USERPROFILE }}\AppData\Local\vcpkg\archives
+            ${{ env.VCPKG_ROOT }}\\installed
+            ${{ env.VCPKG_ROOT }}\\buildtrees
+            ${{ env.VCPKG_ROOT }}\\packages
+            ${{ env.USERPROFILE }}\\AppData\\Local\\vcpkg\\archives
           key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}
+
 
       - name: Install vcpkg (classic)
         shell: pwsh
         run: |
           git clone --depth=1 https://github.com/microsoft/vcpkg "${{ env.VCPKG_ROOT }}"
-          & "${{ env.VCPKG_ROOT }}\bootstrap-vcpkg.bat"
+          & "${{ env.VCPKG_ROOT }}\\bootstrap-vcpkg.bat"
 
       - name: Clone CommonLibSSE-NG
         shell: pwsh
