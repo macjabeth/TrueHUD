@@ -85,14 +85,18 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface* a
 	return true;
 }
 
-extern "C" DLLEXPORT constinit auto SKSEPlugin_Version = []() {
-	SKSE::PluginVersionData v;
+extern "C" DLLEXPORT constinit auto SKSEPlugin_Version = []() noexcept {
+	SKSE::PluginVersionData v{};
 
 	v.PluginVersion(Plugin::VERSION);
 	v.PluginName(Plugin::NAME);
 	v.AuthorName("Ersh");
 	v.UsesAddressLibrary(true);
-	v.CompatibleVersions({ SKSE::RUNTIME_SSE_LATEST });
+	// Explicit runtime compatibility list so SKSE will load on 1.5.97 and common AE versions
+	v.CompatibleVersions({
+		SKSE::RUNTIME_SSE_1_5_97,
+		SKSE::RUNTIME_SSE_LATEST
+	});
 	v.HasNoStructUse(true);
 
 	return v;

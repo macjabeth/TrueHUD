@@ -163,8 +163,13 @@ HUDHandler::EventResult HUDHandler::ProcessEvent(const RE::TESHitEvent* a_event,
 			}
 
 			if (causeActorHandle && targetActorHandle) {
-				auto causeActor = causeActorHandle.get()->As<RE::Actor>();
-				auto targetActor = targetActorHandle.get()->As<RE::Actor>();
+				auto causeRef = causeActorHandle.get();
+				auto targetRef = targetActorHandle.get();
+				if (!causeRef || !targetRef) {
+					return EventResult::kContinue;
+				}
+				auto causeActor = causeRef->As<RE::Actor>();
+				auto targetActor = targetRef->As<RE::Actor>();
 
 				if (causeActor && targetActor) {
 					if (causeActor->IsDead() || targetActor->IsDead()) {
@@ -696,8 +701,13 @@ bool HUDHandler::CheckActorForBoss(RE::ObjectRefHandle a_refHandle)
 		return false;
 	}
 
+	auto ref = a_refHandle.get();
+	if (!ref) {
+		return false;
+	}
+
 	auto playerCharacter = RE::PlayerCharacter::GetSingleton();
-	auto actor = a_refHandle.get()->As<RE::Actor>();
+	auto actor = ref->As<RE::Actor>();
 	if (actor && playerCharacter && (actor != playerCharacter)) {
 		// Check whether the target is even alive or hostile first
 		if (actor->IsDead() || (actor->AsActorState()->IsBleedingOut() && actor->IsEssential()) || !actor->IsHostileToActor(playerCharacter)) {
@@ -729,8 +739,8 @@ bool HUDHandler::CheckActorForBoss(RE::ObjectRefHandle a_refHandle)
 
 		// Check current loc refs
 		if (auto currentLocation = playerCharacter->GetPlayerRuntimeData().currentLocation) {
-			for (auto& ref : currentLocation->specialRefs) {
-				if (ref.type && Settings::bossLocRefTypes.contains(ref.type) && ref.refData.refID == actor->formID) {
+			for (auto& locRef : currentLocation->specialRefs) {
+				if (locRef.type && Settings::bossLocRefTypes.contains(locRef.type) && locRef.refData.refID == actor->formID) {
 					return true;
 				}
 			}

@@ -23,8 +23,10 @@ class HUDHandler :
 	public RE::BSTEventSink<RE::TESHitEvent>,
 	public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 {
-private:
+public:
 	using EventResult = RE::BSEventNotifyControl;
+
+private:
 	using TrueHUDMenu = Scaleform::TrueHUDMenu;
 	using BarColorType = ::TRUEHUD_API::BarColorType;
 	using WidgetRemovalMode = TRUEHUD_API::WidgetRemovalMode;

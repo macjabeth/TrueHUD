@@ -63,17 +63,35 @@ jobs:
           cmake -S . -B "${{ env.BUILD_DIR }}" `
             -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_BUILD_TYPE=Release `
             -DBUILD_TESTS=ON
 
-      - name: Build (Debug)
+      - name: Build (Release)
         shell: pwsh
         run: |
-          cmake --build "${{ env.BUILD_DIR }}" --config Debug --parallel
+          $env:CommonLibSSEPath_NG = "${{ env.COMMONLIBSSE_NG_DIR }}"
+          $env:CompiledPluginsPath = "${{ env.ARTIFACTS_DIR }}"
+          cmake --build "${{ env.BUILD_DIR }}" --config Release --parallel
 
-      - name: Run tests
+      - name: Run tests (Release)
         shell: pwsh
         run: |
-          ctest --test-dir "${{ env.BUILD_DIR }}" -C Debug --output-on-failure
+          ctest --test-dir "${{ env.BUILD_DIR }}" -C Release --output-on-failure
+
+      - name: Verify artifacts
+        shell: pwsh
+        run: |
+          Write-Host "Verifying Release build artifacts..."
+          Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}" -Recurse -File | Select-Object FullName, Length, LastWriteTime | Format-Table -AutoSize
+          if (-not (Test-Path "${{ env.ARTIFACTS_DIR }}\SKSE\Plugins\TrueHUD.dll")) {
+            Write-Error "TrueHUD.dll not found in artifacts directory!"
+            exit 1
+          }
+          $dllSize = (Get-Item "${{ env.ARTIFACTS_DIR }}\SKSE\Plugins\TrueHUD.dll").Length
+          Write-Host "TrueHUD.dll size: $dllSize bytes"
+          if ($dllSize -gt 2000000) {
+            Write-Warning "DLL size is larger than expected for Release build (>2MB). Verify this is not a Debug build."
+          }
 
       - name: Upload artifacts (DLL/PDB)
         if: always()
